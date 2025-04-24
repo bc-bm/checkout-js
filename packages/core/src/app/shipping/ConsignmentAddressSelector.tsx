@@ -11,6 +11,7 @@ import { EMPTY_ARRAY, isFloatingLabelEnabled } from "../common/utility";
 import { AssignItemFailedError, AssignItemInvalidAddressError } from "./errors";
 import { MultiShippingConsignmentData } from "./MultishippingType";
 import { setRecommendedOrMissingShippingOption } from './utils';
+import { preventDefault } from "@bigcommerce/checkout/dom-utils";
 
 interface ConsignmentAddressSelectorProps {
     consignment?: MultiShippingConsignmentData;
@@ -167,6 +168,7 @@ const ConsignmentAddressSelector = ({
                 onRequestClose={handleCloseAddAddressForm}
                 onSaveAddress={handleSaveAddress}
             />
+            {(!isGuest || selectedAddress) && (
             <AddressSelect
                 addresses={addresses}
                 onSelectAddress={handleSelectAddress}
@@ -175,7 +177,16 @@ const ConsignmentAddressSelector = ({
                 selectedAddress={selectedAddress}
                 showSingleLineAddress
                 type={AddressType.Shipping}
-            />
+            />)}
+            {(isGuest && !selectedAddress) && (
+                 <a
+                                data-test="add-new-address"
+                                href="#"
+                                onClick={preventDefault(() => handleUseNewAddress())}
+                            >
+                                <TranslatedString id="address.enter_address_action" />
+                </a>
+            )}
         </>
     )
 }
