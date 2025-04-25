@@ -11,12 +11,14 @@ import { EMPTY_ARRAY, isFloatingLabelEnabled } from "../common/utility";
 import { AssignItemFailedError, AssignItemInvalidAddressError } from "./errors";
 import { MultiShippingConsignmentData } from "./MultishippingType";
 import { setRecommendedOrMissingShippingOption } from './utils';
+import { preventDefault } from "@bigcommerce/checkout/dom-utils";
 
 interface ConsignmentAddressSelectorProps {
     consignment?: MultiShippingConsignmentData;
     defaultCountryCode?: string;
     countriesWithAutocomplete: string[];
     isLoading: boolean;
+    isGuest: boolean;
     onUnhandledError(error: Error): void;
     setConsignmentRequest?(consignmentRequest: ConsignmentCreateRequestBody): void;
     selectedAddress?: Address;
@@ -27,6 +29,7 @@ const ConsignmentAddressSelector = ({
     countriesWithAutocomplete,
     defaultCountryCode,
     isLoading,
+    isGuest,
     onUnhandledError,
     selectedAddress,
     setConsignmentRequest,
@@ -122,11 +125,14 @@ const ConsignmentAddressSelector = ({
 
         await handleSelectAddress(address);
 
-        try {
-            await createCustomerAddress(address);
-        } catch (error) {
-            if (error instanceof Error) {
-                setCreateCustomerAddressError(error);
+        if(!isGuest)
+        {
+            try {
+                await createCustomerAddress(address);
+            } catch (error) {
+                if (error instanceof Error) {
+                    setCreateCustomerAddressError(error);
+                }
             }
         }
 
@@ -162,6 +168,7 @@ const ConsignmentAddressSelector = ({
                 onRequestClose={handleCloseAddAddressForm}
                 onSaveAddress={handleSaveAddress}
             />
+            {(!isGuest || selectedAddress) && (
             <AddressSelect
                 addresses={addresses}
                 onSelectAddress={handleSelectAddress}
@@ -170,7 +177,16 @@ const ConsignmentAddressSelector = ({
                 selectedAddress={selectedAddress}
                 showSingleLineAddress
                 type={AddressType.Shipping}
-            />
+            />)}
+            {(isGuest && !selectedAddress) && (
+                 <a
+                                data-test="add-new-address"
+                                href="#"
+                                onClick={preventDefault(() => handleUseNewAddress())}
+                            >
+                                <TranslatedString id="address.enter_address_action" />
+                </a>
+            )}
         </>
     )
 }
